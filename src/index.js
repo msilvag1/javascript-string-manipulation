@@ -1,11 +1,16 @@
-// Create a tagged template lf`...` that formats text using LF line endings.
-var lf = () => {};
+const transformString = (lineEnding, strings, ...values) => (strings.reduce((acum, curr, index) => {
+  let lfString = curr;
+  let lfValue = values[index - 1] || '';
 
-// Create a tagged template cr`...` that formats text using CR line endings.
-var cr = () => {};
+  if (!lfValue[Symbol.for('crlf-converter-disable')]) {
+    lfString = transformLineEnding(lfString, lineEnding);
+    lfValue = transformLineEnding(lfValue, lineEnding);
+  }
 
-// Create a tagged template crlf`...` that formats text using CRLF line endings.
-var crlf = () => {};
+  return acum + lfValue + lfString;
+}, ''));
+
+const transformWithEnding = (lineEnding) => (strings, ...values) => transformString(lineEnding, strings, ...values)
 
 const transformLineEnding = (string, lineEnding) => {
   string = (string != null ? string.toString() : "");
@@ -45,10 +50,22 @@ const LineEndingReplacements = {
   replaceCRLF: (string, newEnding) => string.replace(/\r\n/g, `${newEnding}`)
 };
 
+// Create a tagged template lf`...` that formats text using LF line endings.
+const lf = transformWithEnding(LineEndings.LF);
+
+// Create a tagged template cr`...` that formats text using CR line endings.
+const cr = transformWithEnding(LineEndings.CR);
+
+// Create a tagged template crlf`...` that formats text using CRLF line endings.
+const crlf = transformWithEnding(LineEndings.CRLF);
+
+const disableConverter = Symbol.for('crlf-converter-disable');
+
 module.exports = {
   lf,
   cr,
   crlf,
   LineEndings,
-  transformLineEnding
+  transformLineEnding,
+  disableConverter
 };
